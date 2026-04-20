@@ -1,0 +1,60 @@
+{
+  "name": "git-branch-switcher",
+  "displayName": "Git Branch Switcher",
+  "description": "JetBrains-style branches popup with multi-repo support, drill-down actions, push/pull, log, compare, rename — for VS Code and Cursor.",
+  "version": "0.1.0",
+  "publisher": "marchenko-ia12",
+  "license": "MIT",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["SCM Providers", "Other"],
+  "keywords": [
+    "git",
+    "branches",
+    "branch",
+    "switcher",
+    "checkout",
+    "multi-repo",
+    "monorepo",
+    "jetbrains",
+    "popup"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marchenko-ia12/cursor-git-extensions",
+    "directory": "packages/branches-popup"
+  },
+  "bugs": {
+    "url": "https://github.com/marchenko-ia12/cursor-git-extensions/issues"
+  },
+  "homepage": "https://github.com/marchenko-ia12/cursor-git-extensions/tree/main/packages/branches-popup#readme",
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitBranchSwitcher.open",
+        "title": "Show Branches Popup",
+        "category": "Git Branch Switcher"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "gitBranchSwitcher.open",
+        "key": "ctrl+shift+`",
+        "mac": "cmd+shift+`"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "typecheck": "tsc --noEmit",
+    "package": "vsce package --allow-missing-repository --skip-license --no-dependencies",
+    "vscode:prepublish": "npm run build"
+  }
+}

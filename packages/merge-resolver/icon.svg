@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6b1c1c"/>
+      <stop offset="1" stop-color="#2a1410"/>
+    </linearGradient>
+    <radialGradient id="drum" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0" stop-color="#f2c67a"/>
+      <stop offset="1" stop-color="#8a5a1f"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#bg)"/>
+
+  <!-- Merge Y behind the cylinder -->
+  <g fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.92">
+    <path d="M28 18 C 28 50, 64 54, 64 64"/>
+    <path d="M100 18 C 100 50, 64 54, 64 64"/>
+    <line x1="64" y1="64" x2="64" y2="110"/>
+    <circle cx="28" cy="18" r="6" fill="#ffffff"/>
+    <circle cx="100" cy="18" r="6" fill="#ffffff"/>
+    <circle cx="64" cy="114" r="7" fill="#ffffff"/>
+  </g>
+
+  <!-- Revolver cylinder -->
+  <circle cx="64" cy="64" r="28" fill="url(#drum)" stroke="#1a0b08" stroke-width="3"/>
+  <g fill="#1a0b08">
+    <circle cx="64" cy="46" r="5"/>
+    <circle cx="79.6" cy="55" r="5"/>
+    <circle cx="79.6" cy="73" r="5"/>
+    <circle cx="64" cy="82" r="5"/>
+    <circle cx="48.4" cy="73" r="5"/>
+    <circle cx="48.4" cy="55" r="5"/>
+  </g>
+  <circle cx="64" cy="64" r="3.5" fill="#1a0b08"/>
+</svg>

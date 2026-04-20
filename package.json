@@ -1,0 +1,27 @@
+{
+  "name": "cursor-git-extensions",
+  "private": true,
+  "version": "0.1.0",
+  "description": "JetBrains-style git tooling for VS Code and Cursor — a branches popup and a 3-way merge conflict resolver.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marchenko-ia12/cursor-git-extensions"
+  },
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -ws --if-present",
+    "watch": "npm run watch -ws --if-present",
+    "package": "npm run package -ws --if-present",
+    "typecheck": "npm run typecheck -ws --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.24.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}

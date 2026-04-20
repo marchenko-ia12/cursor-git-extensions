@@ -1,0 +1,77 @@
+{
+  "name": "ocelot-merge-resolver",
+  "displayName": "Ocelot Merge Resolver",
+  "description": "Six-shooter for your git conflicts. JetBrains-style 3-way merge resolver with mini-map, git history per side, and optional AI-assisted suggestions via the Anthropic API.",
+  "version": "0.1.0",
+  "publisher": "marchenko-ia12",
+  "license": "MIT",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Other", "SCM Providers"],
+  "keywords": [
+    "git",
+    "merge",
+    "conflict",
+    "resolver",
+    "3-way",
+    "jetbrains",
+    "rebase",
+    "anthropic",
+    "claude",
+    "ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marchenko-ia12/cursor-git-extensions",
+    "directory": "packages/merge-resolver"
+  },
+  "bugs": {
+    "url": "https://github.com/marchenko-ia12/cursor-git-extensions/issues"
+  },
+  "homepage": "https://github.com/marchenko-ia12/cursor-git-extensions/tree/main/packages/merge-resolver#readme",
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "mergeResolver.editor",
+        "displayName": "Merge Resolver",
+        "selector": [{ "filenamePattern": "*" }],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "mergeResolver.open",
+        "title": "Open current file in Merge Resolver",
+        "category": "Merge Resolver"
+      },
+      {
+        "command": "mergeResolver.setAiKey",
+        "title": "Set Anthropic API key",
+        "category": "Merge Resolver"
+      }
+    ],
+    "configuration": {
+      "title": "Merge Resolver",
+      "properties": {
+        "mergeResolver.anthropicModel": {
+          "type": "string",
+          "default": "claude-sonnet-4-6",
+          "description": "Anthropic model to use for AI conflict resolution suggestions."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "typecheck": "tsc --noEmit",
+    "package": "vsce package --allow-missing-repository --skip-license --no-dependencies",
+    "vscode:prepublish": "npm run build"
+  }
+}
