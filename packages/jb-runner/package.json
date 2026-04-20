@@ -39,13 +39,19 @@
         "command": "jbRunner.run",
         "title": "Run current configuration",
         "category": "JB Runner",
-        "icon": "$(play)"
+        "icon": {
+          "light": "resources/play.svg",
+          "dark": "resources/play.svg"
+        }
       },
       {
         "command": "jbRunner.stop",
         "title": "Stop running configuration",
         "category": "JB Runner",
-        "icon": "$(debug-stop)"
+        "icon": {
+          "light": "resources/stop.svg",
+          "dark": "resources/stop.svg"
+        }
       },
       {
         "command": "jbRunner.pickConfig",

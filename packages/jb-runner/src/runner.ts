@@ -39,7 +39,7 @@ export class Runner {
       cwd: config.cwd,
     });
     terminal.show(true);
-    terminal.sendText(`npm run ${shellEscape(config.script)}`);
+    terminal.sendText(`${config.packageManager} run ${shellEscape(config.script)}`);
     this.running = { config, terminal };
     this.onChangedEmitter.fire();
   }

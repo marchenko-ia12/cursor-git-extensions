@@ -4,6 +4,8 @@ import { Runner } from "./runner";
 import { StatusBar } from "./statusBar";
 
 const SELECTED_CONFIG_KEY = "jbRunner.selectedConfig";
+const MRU_KEY = "jbRunner.mru";
+const MRU_MAX = 5;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const runner = new Runner(context);
@@ -45,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         vscode.window.showWarningMessage("JB Runner: no package.json scripts found in the workspace.");
         return;
       }
-      const picked = await pickFromList(all, selected);
+      const picked = await pickFromList(all, selected, getMru(context));
       if (!picked) return;
       selected = picked;
       await context.workspaceState.update(SELECTED_CONFIG_KEY, picked.id);
@@ -57,6 +59,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         await vscode.commands.executeCommand("jbRunner.pickConfig");
       }
       if (!selected) return;
+      await bumpMru(context, selected.id);
       await runner.start(selected);
     }),
 
@@ -77,18 +80,45 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   }
 }
 
+function getMru(ctx: vscode.ExtensionContext): string[] {
+  return ctx.workspaceState.get<string[]>(MRU_KEY, []);
+}
+
+async function bumpMru(ctx: vscode.ExtensionContext, id: string): Promise<void> {
+  const prev = getMru(ctx);
+  const next = [id, ...prev.filter(x => x !== id)].slice(0, MRU_MAX);
+  await ctx.workspaceState.update(MRU_KEY, next);
+}
+
 async function pickFromList(
   configs: RunConfig[],
-  current: RunConfig | undefined
+  current: RunConfig | undefined,
+  mru: string[]
 ): Promise<RunConfig | undefined> {
   const multiplePackages = new Set(configs.map(c => c.packageName)).size > 1;
-  const items: (vscode.QuickPickItem & { cfg: RunConfig })[] = configs.map(c => ({
+  const byId = new Map(configs.map(c => [c.id, c]));
+  const recent = mru.map(id => byId.get(id)).filter((c): c is RunConfig => !!c);
+  const recentIds = new Set(recent.map(c => c.id));
+  const rest = configs.filter(c => !recentIds.has(c.id));
+
+  type Item = vscode.QuickPickItem & { cfg?: RunConfig };
+  const items: Item[] = [];
+
+  const toItem = (c: RunConfig): Item => ({
     label: `$(play) ${c.script}`,
-    description: multiplePackages ? c.packageName : undefined,
+    description: multiplePackages ? `${c.packageName} · ${c.packageManager}` : c.packageManager,
     detail: c.cwd,
     cfg: c,
     picked: current?.id === c.id,
-  }));
+  });
+
+  if (recent.length > 0) {
+    items.push({ label: "Recent", kind: vscode.QuickPickItemKind.Separator });
+    for (const c of recent) items.push(toItem(c));
+    items.push({ label: "All scripts", kind: vscode.QuickPickItemKind.Separator });
+  }
+  for (const c of rest) items.push(toItem(c));
+
   const pick = await vscode.window.showQuickPick(items, {
     title: "JB Runner — pick a script",
     placeHolder: current ? `Current: ${current.packageName} — ${current.script}` : "No configuration selected",

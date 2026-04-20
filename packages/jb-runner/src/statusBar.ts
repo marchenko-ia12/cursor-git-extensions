@@ -61,27 +61,44 @@ export class StatusBar {
     );
   }
 
+  private selected: RunConfig | undefined;
+
   render(selected: RunConfig | undefined): void {
-    if (selected) {
-      this.configItem.text = `$(project) ${selected.packageName}: ${selected.script}`;
-      this.configItem.tooltip = `Pick run configuration\nCurrent: ${selected.packageName} — ${selected.script}\n${selected.cwd}`;
-    } else {
-      this.configItem.text = "$(project) No config";
-      this.configItem.tooltip = "Pick run configuration";
-    }
-    this.configItem.show();
+    this.selected = selected;
     this.update();
+    this.configItem.show();
   }
 
   private update(): void {
     const running = this.runner.isRunning();
+    const runningCfg = this.runner.currentRunning;
+    const display = this.selected;
+
+    if (running && runningCfg) {
+      this.configItem.text = `$(sync~spin) ${runningCfg.packageName}: ${runningCfg.script}`;
+      this.configItem.tooltip =
+        `Running: ${runningCfg.packageName} — ${runningCfg.script}\n` +
+        `${runningCfg.packageManager} run ${runningCfg.script}\n` +
+        `${runningCfg.cwd}\n\n` +
+        `Click to pick another configuration`;
+    } else if (display) {
+      this.configItem.text = `$(project) ${display.packageName}: ${display.script}`;
+      this.configItem.tooltip =
+        `Pick run configuration\n` +
+        `Current: ${display.packageName} — ${display.script}\n` +
+        `${display.packageManager} run ${display.script}\n` +
+        `${display.cwd}`;
+    } else {
+      this.configItem.text = "$(project) No config";
+      this.configItem.tooltip = "Pick run configuration";
+    }
+
     if (running) {
       this.runItem.hide();
       this.stopItem.show();
       this.outputItem.show();
-      const cfg = this.runner.currentRunning;
-      if (cfg) {
-        this.stopItem.tooltip = `Stop: ${cfg.packageName} — ${cfg.script} (${keyHint("Cmd+F2", "Ctrl+F2")})`;
+      if (runningCfg) {
+        this.stopItem.tooltip = `Stop: ${runningCfg.packageName} — ${runningCfg.script} (${keyHint("Cmd+F2", "Ctrl+F2")})`;
       }
     } else {
       this.stopItem.hide();
