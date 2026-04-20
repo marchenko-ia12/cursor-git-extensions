@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1
+
+### Changed
+
+- **Add custom configuration…** is now the first item in the picker
+  instead of the last — always visible, no need to scroll past long
+  script lists.
+
 ## 0.3.0
 
 ### Added

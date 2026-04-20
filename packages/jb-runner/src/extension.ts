@@ -146,6 +146,8 @@ async function pickFromList(
     };
   };
 
+  items.push({ label: "$(add) Add custom configuration…", addCustom: true });
+
   if (recent.length > 0) {
     items.push({ label: "Recent", kind: vscode.QuickPickItemKind.Separator });
     for (const c of recent) items.push(toItem(c));
@@ -158,9 +160,6 @@ async function pickFromList(
     items.push({ label: "package.json scripts", kind: vscode.QuickPickItemKind.Separator });
     for (const c of npmRest) items.push(toItem(c));
   }
-
-  items.push({ label: "", kind: vscode.QuickPickItemKind.Separator });
-  items.push({ label: "$(add) Add custom configuration…", addCustom: true });
 
   const pick = await vscode.window.showQuickPick(items, {
     title: "JB Runner — pick a configuration",

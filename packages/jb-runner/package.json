@@ -2,7 +2,7 @@
   "name": "jb-runner",
   "displayName": "JB Runner",
   "description": "JetBrains-style run toolbar for VS Code and Cursor: pick an npm script, hit ▶, stop with ⏹ — right in the status bar.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "marchenko-ia12",
   "license": "MIT",
   "icon": "icon.png",
