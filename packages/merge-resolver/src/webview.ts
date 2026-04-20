@@ -70,19 +70,51 @@ export function webviewHtml(webview: vscode.Webview, _extUri: vscode.Uri): strin
   .history-item .subject { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                            grid-column: 1 / -1; font-size: 11px; opacity: 0.9; }
   .history-empty { padding: 4px 10px; opacity: 0.5; font-style: italic; font-size: 10px; }
-  .line { padding: 0 10px; }
-  .line.common { color: var(--vscode-editor-foreground); }
-  .line.yours { background: rgba(64, 160, 255, 0.12); }
-  .line.theirs { background: rgba(120, 200, 120, 0.15); }
+  .line { padding: 0 10px 0 24px; position: relative; }
+  .line.common { color: var(--vscode-editor-foreground); opacity: 0.58; }
+  .line.yours {
+    background: var(--vscode-merge-currentContentBackground, rgba(64, 160, 255, 0.22));
+    opacity: 1;
+  }
+  .line.yours::before {
+    content: '−'; position: absolute; left: 8px; top: 0;
+    color: var(--vscode-gitDecoration-deletedResourceForeground, #f97583);
+    font-weight: 700; opacity: 0.9;
+  }
+  .line.theirs {
+    background: var(--vscode-merge-incomingContentBackground, rgba(120, 200, 120, 0.22));
+    opacity: 1;
+  }
+  .line.theirs::before {
+    content: '+'; position: absolute; left: 8px; top: 0;
+    color: var(--vscode-gitDecoration-untrackedResourceForeground, #85e89d);
+    font-weight: 700; opacity: 0.9;
+  }
   .line.base { background: rgba(180, 180, 180, 0.1); font-style: italic; opacity: 0.8; }
+  .line.base::before { content: '·'; position: absolute; left: 8px; opacity: 0.5; }
   .conflict-block { margin: 4px 0; border: 1px solid var(--vscode-panel-border); border-radius: 3px; overflow: hidden;
                     transition: outline-color 0.3s ease; outline: 2px solid transparent; outline-offset: -1px; }
   .conflict-block.resolved { opacity: 0.6; }
   .conflict-block.unresolved { border-color: var(--vscode-editorWarning-foreground); }
   .conflict-block.focused { outline-color: var(--vscode-focusBorder); opacity: 1; }
+  .conflict-sep {
+    padding: 3px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--vscode-descriptionForeground, #888); opacity: 0.85;
+    border-top: 1px dashed var(--vscode-panel-border);
+    border-bottom: 1px dashed var(--vscode-panel-border);
+    text-align: center; background: var(--vscode-editorWidget-background);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .conflict-sep .arrow { font-size: 13px; opacity: 0.8; }
   .conflict-slot { scroll-margin: 40px; position: relative; margin: 2px 0; }
-  #yours .conflict-slot { border-left: 3px solid rgba(64, 160, 255, 0.55); }
-  #theirs .conflict-slot { border-right: 3px solid rgba(120, 200, 120, 0.6); }
+  #yours .conflict-slot {
+    border-left: 3px solid var(--vscode-merge-currentHeaderBackground, rgba(64, 160, 255, 0.75));
+    background: rgba(64, 160, 255, 0.04);
+  }
+  #theirs .conflict-slot {
+    border-right: 3px solid var(--vscode-merge-incomingHeaderBackground, rgba(120, 200, 120, 0.75));
+    background: rgba(120, 200, 120, 0.04);
+  }
   .slot-accept { position: absolute; top: 4px; z-index: 3;
                  width: 28px; height: 22px;
                  background: var(--vscode-button-background);
@@ -282,18 +314,20 @@ export function webviewHtml(webview: vscode.Webview, _extUri: vscode.Uri): strin
     });
   }
 
+  const SEP = '<div class="conflict-sep"><span class="arrow">↓</span><span>or</span><span class="arrow">↓</span></div>';
+
   function renderConflictBlock(c, res) {
     const resolvedClass = res ? 'resolved' : 'unresolved';
     let body;
     if (!res) {
-      body = renderLines(c.yours, 'yours') + renderLines(c.theirs, 'theirs');
+      body = renderLines(c.yours, 'yours') + SEP + renderLines(c.theirs, 'theirs');
     } else if (res.kind === 'yours') body = renderLines(c.yours, 'yours');
     else if (res.kind === 'theirs') body = renderLines(c.theirs, 'theirs');
     else if (res.kind === 'base') body = renderLines(c.base || '', 'base');
     else if (res.kind === 'both') {
       body = res.order === 'yt'
-        ? renderLines(c.yours, 'yours') + renderLines(c.theirs, 'theirs')
-        : renderLines(c.theirs, 'theirs') + renderLines(c.yours, 'yours');
+        ? renderLines(c.yours, 'yours') + SEP + renderLines(c.theirs, 'theirs')
+        : renderLines(c.theirs, 'theirs') + SEP + renderLines(c.yours, 'yours');
     }
 
     const resetBtn = res ? '<button class="mini secondary" data-action="reset" data-id="'+c.id+'" title="Reset">⟲</button>' : '';

@@ -2,7 +2,7 @@
   "name": "ocelot-merge-resolver",
   "displayName": "Ocelot Merge Resolver",
   "description": "Six-shooter for your git conflicts. JetBrains-style 3-way merge resolver with mini-map, git history per side, and optional AI-assisted suggestions via the Anthropic API.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "marchenko-ia12",
   "license": "MIT",
   "icon": "icon.png",
