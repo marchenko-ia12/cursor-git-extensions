@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
+import { expandVars } from "./vars";
 
 export type PackageManager = "npm" | "yarn" | "pnpm" | "bun";
 export type ConfigKind = "npm" | "custom";
@@ -80,16 +81,19 @@ export function readCustomConfigs(): RunConfig[] {
     .getConfiguration("jbRunner")
     .get<CustomConfigRaw[]>("configurations", []);
 
+  const ctx = { workspaceFolder: root };
   const configs: RunConfig[] = [];
   for (const entry of raw) {
     if (!entry || typeof entry !== "object") continue;
     const name = typeof entry.name === "string" ? entry.name.trim() : "";
-    const command = typeof entry.command === "string" ? entry.command.trim() : "";
-    if (!name || !command) continue;
+    const commandRaw = typeof entry.command === "string" ? entry.command.trim() : "";
+    if (!name || !commandRaw) continue;
 
     const cwdRaw = typeof entry.cwd === "string" ? entry.cwd.trim() : "";
-    const cwd = cwdRaw ? resolveCwd(root, cwdRaw) : root;
-    const env = sanitizeEnv(entry.env);
+    const cwdExpanded = cwdRaw ? expandVars(cwdRaw, ctx) : "";
+    const cwd = cwdExpanded ? resolveCwd(root, cwdExpanded) : root;
+    const command = expandVars(commandRaw, ctx);
+    const env = expandEnv(sanitizeEnv(entry.env), ctx);
 
     configs.push({
       id: `custom::${name}`,
@@ -103,6 +107,16 @@ export function readCustomConfigs(): RunConfig[] {
     });
   }
   return configs;
+}
+
+function expandEnv(
+  env: Record<string, string> | undefined,
+  ctx: { workspaceFolder?: string }
+): Record<string, string> | undefined {
+  if (!env) return undefined;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(env)) out[k] = expandVars(v, ctx);
+  return out;
 }
 
 function sanitizeEnv(raw: unknown): Record<string, string> | undefined {

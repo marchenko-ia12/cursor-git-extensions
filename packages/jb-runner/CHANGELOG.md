@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+
+- **Wizard now collects `cwd` and `env`.** `JB Runner: Add custom
+  configuration` asks for working directory and environment variables
+  in IntelliJ-style format (`KEY=value;OTHER=value`) — no more editing
+  `settings.json` by hand for the common case.
+- **Variable substitution** in `command`, `cwd`, and `env` values:
+  - `${workspaceFolder}` — first workspace folder's absolute path
+  - `${workspaceFolderBasename}` — its folder name
+  - `${userHome}` — current user's home
+  - `${env:NAME}` — host environment variable
+  - `${cwd}`, `${pathSeparator}`
+
 ## 0.2.0
 
 ### Added

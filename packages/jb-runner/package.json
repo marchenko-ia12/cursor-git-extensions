@@ -2,7 +2,7 @@
   "name": "jb-runner",
   "displayName": "JB Runner",
   "description": "JetBrains-style run toolbar for VS Code and Cursor: pick an npm script, hit ▶, stop with ⏹ — right in the status bar.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "marchenko-ia12",
   "license": "MIT",
   "icon": "icon.png",
@@ -91,15 +91,15 @@
               },
               "command": {
                 "type": "string",
-                "description": "Shell command to run (e.g. 'make run', 'python manage.py runserver')."
+                "markdownDescription": "Shell command to run (e.g. `make run`, `python manage.py runserver`). Supports `${workspaceFolder}`, `${workspaceFolderBasename}`, `${userHome}`, `${env:NAME}`."
               },
               "cwd": {
                 "type": "string",
-                "description": "Working directory, absolute or relative to the first workspace folder. Defaults to the workspace root."
+                "markdownDescription": "Working directory, absolute or relative to the first workspace folder. Defaults to the workspace root. Supports `${workspaceFolder}`, `${userHome}`, `${env:NAME}`."
               },
               "env": {
                 "type": "object",
-                "description": "Environment variables merged into the terminal on launch.",
+                "markdownDescription": "Environment variables merged into the terminal on launch. Values support `${workspaceFolder}`, `${userHome}`, `${env:NAME}`.",
                 "additionalProperties": { "type": "string" }
               }
             }

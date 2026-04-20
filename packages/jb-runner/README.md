@@ -10,6 +10,8 @@ hit `▶`, stop with `⏹` — right from the status bar.
   (node_modules excluded), exposes all `scripts` as run configurations.
 - **Custom configurations** — add your own shell commands (`make run`,
   `python manage.py runserver`, anything) with optional `cwd` and `env`.
+  Values support variable substitution: `${workspaceFolder}`,
+  `${userHome}`, `${env:NAME}`, etc.
 - **Package manager detection** — uses the right tool based on lockfile
   (`bun.lockb` → `bun`, `pnpm-lock.yaml` → `pnpm`, `yarn.lock` → `yarn`,
   falls back to `npm`).
@@ -34,7 +36,16 @@ or User Settings:
   "jbRunner.configurations": [
     { "name": "Run Python",   "command": "make run" },
     { "name": "Django dev",   "command": "python manage.py runserver", "cwd": "backend" },
-    { "name": "With env",     "command": "node server.js", "env": { "PORT": "4000", "DEBUG": "app:*" } }
+    { "name": "With env",     "command": "node server.js", "env": { "PORT": "4000", "DEBUG": "app:*" } },
+    {
+      "name": "Java Runner",
+      "command": "java -cp af-quality-agents-service com.reltio.services.afq.Runner",
+      "cwd": "${workspaceFolder}/services",
+      "env": {
+        "VAULT_URL": "https://vault.example.com:8200",
+        "SPRING_PROFILES_ACTIVE": "dev"
+      }
+    }
   ]
 }
 ```
@@ -46,8 +57,31 @@ Fields:
 - `cwd` (optional) — absolute path, or relative to the first workspace folder.
 - `env` (optional) — map of environment variables merged into the terminal.
 
-Or use the command **`JB Runner: Add custom configuration`** to add one
-through prompts.
+### Variable substitution
+
+`command`, `cwd` and every `env` value expand the following tokens
+before launch — same style as `launch.json` / `tasks.json`:
+
+| Token | Expands to |
+| --- | --- |
+| `${workspaceFolder}` | Absolute path of the first workspace folder |
+| `${workspaceFolderBasename}` | Its folder name only |
+| `${userHome}` | Current user's home directory |
+| `${env:NAME}` | Host environment variable `NAME` (empty if unset) |
+| `${cwd}` | Process working directory at launch |
+| `${pathSeparator}` | `/` on macOS/Linux, `\` on Windows |
+
+### Add via wizard
+
+`JB Runner: Add custom configuration` walks you through four prompts —
+**name**, **command**, **cwd**, **env**. The env step accepts
+IntelliJ-style semicolon-separated pairs:
+
+```
+VAULT_URL=https://vault.example.com:8200;SPRING_PROFILES_ACTIVE=dev
+```
+
+Leave any optional step empty to skip it.
 
 ## Editor title bar buttons
 

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { findAllConfigs, RunConfig } from "./scripts";
 import { Runner } from "./runner";
 import { StatusBar } from "./statusBar";
+import { parseEnvString } from "./vars";
 
 const SELECTED_CONFIG_KEY = "jbRunner.selectedConfig";
 const MRU_KEY = "jbRunner.mru";
@@ -178,7 +179,7 @@ async function pickFromList(
 
 async function addCustomConfiguration(): Promise<void> {
   const name = await vscode.window.showInputBox({
-    title: "JB Runner — new configuration (1/2)",
+    title: "JB Runner — new configuration (1/4)",
     prompt: "Display name",
     placeHolder: "Run Python",
     validateInput: v => (v.trim() ? null : "Name is required"),
@@ -186,15 +187,49 @@ async function addCustomConfiguration(): Promise<void> {
   if (!name) return;
 
   const command = await vscode.window.showInputBox({
-    title: "JB Runner — new configuration (2/2)",
-    prompt: "Shell command",
+    title: "JB Runner — new configuration (2/4)",
+    prompt: "Shell command (supports ${workspaceFolder}, ${userHome}, ${env:NAME})",
     placeHolder: "make run",
     validateInput: v => (v.trim() ? null : "Command is required"),
   });
   if (!command) return;
 
+  const cwd = await vscode.window.showInputBox({
+    title: "JB Runner — new configuration (3/4)",
+    prompt: "Working directory — leave empty for workspace root",
+    placeHolder: "${workspaceFolder}/services  (or absolute path, or empty)",
+  });
+  if (cwd === undefined) return;
+
+  const envString = await vscode.window.showInputBox({
+    title: "JB Runner — new configuration (4/4)",
+    prompt: "Environment variables — leave empty for none",
+    placeHolder: "KEY=value;OTHER=value  (semicolon-separated, IntelliJ-style)",
+    validateInput: v => {
+      if (!v.trim()) return null;
+      for (const part of v.split(";")) {
+        const t = part.trim();
+        if (t && t.indexOf("=") === -1) {
+          return `"${t}" — expected KEY=value`;
+        }
+      }
+      return null;
+    },
+  });
+  if (envString === undefined) return;
+
   const scope = await pickConfigScope();
   if (!scope) return;
+
+  const entry: Record<string, unknown> = {
+    name: name.trim(),
+    command: command.trim(),
+  };
+  if (cwd.trim()) entry.cwd = cwd.trim();
+  if (envString.trim()) {
+    const env = parseEnvString(envString);
+    if (Object.keys(env).length > 0) entry.env = env;
+  }
 
   const cfg = vscode.workspace.getConfiguration("jbRunner");
   const inspect = cfg.inspect<unknown[]>("configurations");
@@ -203,12 +238,10 @@ async function addCustomConfiguration(): Promise<void> {
       ? inspect?.workspaceValue
       : inspect?.globalValue;
   const prev = Array.isArray(existing) ? [...existing] : [];
-  prev.push({ name: name.trim(), command: command.trim() });
+  prev.push(entry);
   await cfg.update("configurations", prev, scope);
 
-  vscode.window.showInformationMessage(
-    `JB Runner: added "${name.trim()}". Edit settings to add cwd or env.`
-  );
+  vscode.window.showInformationMessage(`JB Runner: added "${name.trim()}".`);
 }
 
 async function pickConfigScope(): Promise<vscode.ConfigurationTarget | undefined> {
