@@ -2,7 +2,7 @@
   "name": "jb-runner",
   "displayName": "JB Runner",
   "description": "JetBrains-style run toolbar for VS Code and Cursor: pick an npm script, hit ▶, stop with ⏹ — right in the status bar.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "marchenko-ia12",
   "license": "MIT",
   "icon": "icon.png",
@@ -62,8 +62,51 @@
         "command": "jbRunner.showOutput",
         "title": "Show output of running configuration",
         "category": "JB Runner"
+      },
+      {
+        "command": "jbRunner.addConfig",
+        "title": "Add custom configuration",
+        "category": "JB Runner"
+      },
+      {
+        "command": "jbRunner.editConfigs",
+        "title": "Edit configurations (settings.json)",
+        "category": "JB Runner"
       }
     ],
+    "configuration": {
+      "title": "JB Runner",
+      "properties": {
+        "jbRunner.configurations": {
+          "type": "array",
+          "default": [],
+          "markdownDescription": "Custom run configurations. Each entry is launched as a shell command in its own terminal — independent from `package.json` scripts.",
+          "items": {
+            "type": "object",
+            "required": ["name", "command"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name shown in the picker and status bar."
+              },
+              "command": {
+                "type": "string",
+                "description": "Shell command to run (e.g. 'make run', 'python manage.py runserver')."
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Working directory, absolute or relative to the first workspace folder. Defaults to the workspace root."
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables merged into the terminal on launch.",
+                "additionalProperties": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
     "menus": {
       "editor/title": [
         {

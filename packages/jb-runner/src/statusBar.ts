@@ -75,18 +75,18 @@ export class StatusBar {
     const display = this.selected;
 
     if (running && runningCfg) {
-      this.configItem.text = `$(sync~spin) ${runningCfg.packageName}: ${runningCfg.script}`;
+      this.configItem.text = `$(sync~spin) ${runningCfg.packageName}: ${runningCfg.label}`;
       this.configItem.tooltip =
-        `Running: ${runningCfg.packageName} — ${runningCfg.script}\n` +
-        `${runningCfg.packageManager} run ${runningCfg.script}\n` +
+        `Running: ${runningCfg.packageName} — ${runningCfg.label}\n` +
+        `${renderCommand(runningCfg)}\n` +
         `${runningCfg.cwd}\n\n` +
         `Click to pick another configuration`;
     } else if (display) {
-      this.configItem.text = `$(project) ${display.packageName}: ${display.script}`;
+      this.configItem.text = `$(project) ${display.packageName}: ${display.label}`;
       this.configItem.tooltip =
         `Pick run configuration\n` +
-        `Current: ${display.packageName} — ${display.script}\n` +
-        `${display.packageManager} run ${display.script}\n` +
+        `Current: ${display.packageName} — ${display.label}\n` +
+        `${renderCommand(display)}\n` +
         `${display.cwd}`;
     } else {
       this.configItem.text = "$(project) No config";
@@ -98,7 +98,7 @@ export class StatusBar {
       this.stopItem.show();
       this.outputItem.show();
       if (runningCfg) {
-        this.stopItem.tooltip = `Stop: ${runningCfg.packageName} — ${runningCfg.script} (${keyHint("Cmd+F2", "Ctrl+F2")})`;
+        this.stopItem.tooltip = `Stop: ${runningCfg.packageName} — ${runningCfg.label} (${keyHint("Cmd+F2", "Ctrl+F2")})`;
       }
     } else {
       this.stopItem.hide();
@@ -111,4 +111,9 @@ export class StatusBar {
 
 function keyHint(mac: string, other: string): string {
   return process.platform === "darwin" ? mac : other;
+}
+
+function renderCommand(cfg: RunConfig): string {
+  if (cfg.kind === "custom") return cfg.command;
+  return `${cfg.packageManager ?? "npm"} run ${cfg.command}`;
 }

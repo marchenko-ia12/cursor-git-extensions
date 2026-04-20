@@ -35,6 +35,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => refresh()),
+    vscode.workspace.onDidChangeConfiguration(e => {
+      if (e.affectsConfiguration("jbRunner.configurations")) refresh();
+    }),
     vscode.workspace.onDidSaveTextDocument(doc => {
       if (doc.fileName.endsWith("package.json")) refresh();
     })
@@ -44,7 +47,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("jbRunner.pickConfig", async () => {
       const all = await findAllConfigs();
       if (all.length === 0) {
-        vscode.window.showWarningMessage("JB Runner: no package.json scripts found in the workspace.");
+        const choice = await vscode.window.showInformationMessage(
+          "JB Runner: no configurations found. Add a custom one?",
+          "Add custom configuration"
+        );
+        if (choice) await vscode.commands.executeCommand("jbRunner.addConfig");
         return;
       }
       const picked = await pickFromList(all, selected, getMru(context));
@@ -69,6 +76,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     vscode.commands.registerCommand("jbRunner.showOutput", () => {
       runner.showOutput();
+    }),
+
+    vscode.commands.registerCommand("jbRunner.addConfig", async () => {
+      await addCustomConfiguration();
+      await refresh();
+    }),
+
+    vscode.commands.registerCommand("jbRunner.editConfigs", async () => {
+      await vscode.commands.executeCommand(
+        "workbench.action.openSettings",
+        "jbRunner.configurations"
+      );
     })
   );
 
@@ -95,37 +114,123 @@ async function pickFromList(
   current: RunConfig | undefined,
   mru: string[]
 ): Promise<RunConfig | undefined> {
-  const multiplePackages = new Set(configs.map(c => c.packageName)).size > 1;
+  const customConfigs = configs.filter(c => c.kind === "custom");
+  const npmConfigs = configs.filter(c => c.kind === "npm");
+  const multiplePackages = new Set(npmConfigs.map(c => c.packageName)).size > 1;
   const byId = new Map(configs.map(c => [c.id, c]));
   const recent = mru.map(id => byId.get(id)).filter((c): c is RunConfig => !!c);
   const recentIds = new Set(recent.map(c => c.id));
-  const rest = configs.filter(c => !recentIds.has(c.id));
+  const npmRest = npmConfigs.filter(c => !recentIds.has(c.id));
+  const customRest = customConfigs.filter(c => !recentIds.has(c.id));
 
-  type Item = vscode.QuickPickItem & { cfg?: RunConfig };
+  type Item = vscode.QuickPickItem & { cfg?: RunConfig; addCustom?: boolean };
   const items: Item[] = [];
 
-  const toItem = (c: RunConfig): Item => ({
-    label: `$(play) ${c.script}`,
-    description: multiplePackages ? `${c.packageName} · ${c.packageManager}` : c.packageManager,
-    detail: c.cwd,
-    cfg: c,
-    picked: current?.id === c.id,
-  });
+  const toItem = (c: RunConfig): Item => {
+    if (c.kind === "custom") {
+      return {
+        label: `$(terminal) ${c.label}`,
+        description: c.command,
+        detail: c.cwd,
+        cfg: c,
+        picked: current?.id === c.id,
+      };
+    }
+    return {
+      label: `$(play) ${c.label}`,
+      description: multiplePackages ? `${c.packageName} · ${c.packageManager}` : c.packageManager,
+      detail: c.cwd,
+      cfg: c,
+      picked: current?.id === c.id,
+    };
+  };
 
   if (recent.length > 0) {
     items.push({ label: "Recent", kind: vscode.QuickPickItemKind.Separator });
     for (const c of recent) items.push(toItem(c));
-    items.push({ label: "All scripts", kind: vscode.QuickPickItemKind.Separator });
   }
-  for (const c of rest) items.push(toItem(c));
+  if (customRest.length > 0) {
+    items.push({ label: "Custom", kind: vscode.QuickPickItemKind.Separator });
+    for (const c of customRest) items.push(toItem(c));
+  }
+  if (npmRest.length > 0) {
+    items.push({ label: "package.json scripts", kind: vscode.QuickPickItemKind.Separator });
+    for (const c of npmRest) items.push(toItem(c));
+  }
+
+  items.push({ label: "", kind: vscode.QuickPickItemKind.Separator });
+  items.push({ label: "$(add) Add custom configuration…", addCustom: true });
 
   const pick = await vscode.window.showQuickPick(items, {
-    title: "JB Runner — pick a script",
-    placeHolder: current ? `Current: ${current.packageName} — ${current.script}` : "No configuration selected",
+    title: "JB Runner — pick a configuration",
+    placeHolder: current
+      ? `Current: ${current.packageName} — ${current.label}`
+      : "No configuration selected",
     matchOnDescription: true,
     matchOnDetail: true,
   });
+  if (pick?.addCustom) {
+    await vscode.commands.executeCommand("jbRunner.addConfig");
+    return undefined;
+  }
   return pick?.cfg;
+}
+
+async function addCustomConfiguration(): Promise<void> {
+  const name = await vscode.window.showInputBox({
+    title: "JB Runner — new configuration (1/2)",
+    prompt: "Display name",
+    placeHolder: "Run Python",
+    validateInput: v => (v.trim() ? null : "Name is required"),
+  });
+  if (!name) return;
+
+  const command = await vscode.window.showInputBox({
+    title: "JB Runner — new configuration (2/2)",
+    prompt: "Shell command",
+    placeHolder: "make run",
+    validateInput: v => (v.trim() ? null : "Command is required"),
+  });
+  if (!command) return;
+
+  const scope = await pickConfigScope();
+  if (!scope) return;
+
+  const cfg = vscode.workspace.getConfiguration("jbRunner");
+  const inspect = cfg.inspect<unknown[]>("configurations");
+  const existing =
+    scope === vscode.ConfigurationTarget.Workspace
+      ? inspect?.workspaceValue
+      : inspect?.globalValue;
+  const prev = Array.isArray(existing) ? [...existing] : [];
+  prev.push({ name: name.trim(), command: command.trim() });
+  await cfg.update("configurations", prev, scope);
+
+  vscode.window.showInformationMessage(
+    `JB Runner: added "${name.trim()}". Edit settings to add cwd or env.`
+  );
+}
+
+async function pickConfigScope(): Promise<vscode.ConfigurationTarget | undefined> {
+  const hasWorkspace = !!vscode.workspace.workspaceFolders?.length;
+  if (!hasWorkspace) return vscode.ConfigurationTarget.Global;
+
+  const pick = await vscode.window.showQuickPick(
+    [
+      {
+        label: "Workspace",
+        description: ".vscode/settings.json (shared via git)",
+        target: vscode.ConfigurationTarget.Workspace,
+      },
+      {
+        label: "User",
+        description: "Global settings (only for you)",
+        target: vscode.ConfigurationTarget.Global,
+      },
+    ],
+    { title: "Save configuration to", placeHolder: "Where to store this configuration?" }
+  );
+  return pick?.target;
 }
 
 export function deactivate(): void {

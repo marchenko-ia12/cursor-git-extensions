@@ -35,11 +35,12 @@ export class Runner {
       await this.stop();
     }
     const terminal = vscode.window.createTerminal({
-      name: `▶ ${config.packageName}: ${config.script}`,
+      name: `▶ ${config.packageName}: ${config.label}`,
       cwd: config.cwd,
+      env: config.env,
     });
     terminal.show(true);
-    terminal.sendText(`${config.packageManager} run ${shellEscape(config.script)}`);
+    terminal.sendText(commandLine(config));
     this.running = { config, terminal };
     this.onChangedEmitter.fire();
   }
@@ -59,6 +60,12 @@ export class Runner {
   showOutput(): void {
     this.running?.terminal.show(false);
   }
+}
+
+function commandLine(config: RunConfig): string {
+  if (config.kind === "custom") return config.command;
+  const pm = config.packageManager ?? "npm";
+  return `${pm} run ${shellEscape(config.command)}`;
 }
 
 function shellEscape(s: string): string {
