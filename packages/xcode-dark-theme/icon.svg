@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f3036"/>
+      <stop offset="1" stop-color="#1f2024"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="22" ry="22" fill="url(#bg)" stroke="#414141" stroke-width="1"/>
+  <circle cx="18" cy="18" r="3.5" fill="#FC545B"/>
+  <circle cx="30" cy="18" r="3.5" fill="#e0c24c"/>
+  <circle cx="42" cy="18" r="3.5" fill="#71bf47"/>
+  <g font-family="ui-monospace, 'SF Mono', 'Menlo', monospace" font-size="10" font-weight="600">
+    <text x="18" y="44" fill="#f97bb0">func</text>
+    <text x="52" y="44" fill="#75c2b3">render</text>
+    <text x="92" y="44" fill="#dfdfe0">()</text>
+    <text x="18" y="62" fill="#f97bb0">let</text>
+    <text x="42" y="62" fill="#82e6ff">Color</text>
+    <text x="74" y="62" fill="#dfdfe0">=</text>
+    <text x="84" y="62" fill="#ff806c">"Xcode"</text>
+    <text x="18" y="80" fill="#f97bb0">var</text>
+    <text x="42" y="80" fill="#49b0ce">n</text>
+    <text x="52" y="80" fill="#dfdfe0">=</text>
+    <text x="62" y="80" fill="#d7c781">42</text>
+    <text x="18" y="98" fill="#7f8c99" font-style="italic">// dark</text>
+    <text x="64" y="98" fill="#b37eee">self</text>
+  </g>
+  <rect x="16" y="108" width="4" height="12" rx="1" fill="#1D7BED"/>
+</svg>

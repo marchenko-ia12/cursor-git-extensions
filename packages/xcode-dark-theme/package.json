@@ -1,0 +1,49 @@
+{
+  "name": "xcode-dark-theme",
+  "displayName": "Xcode Dark (WebStorm port)",
+  "description": "Xcode-Dark color theme ported from the WebStorm/JetBrains 'Xcode-Dark' plugin to VS Code and Cursor.",
+  "version": "0.1.0",
+  "publisher": "marchenko-ia12",
+  "license": "MIT",
+  "icon": "icon.png",
+  "preview": false,
+  "galleryBanner": {
+    "color": "#292a30",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Themes"],
+  "keywords": [
+    "theme",
+    "color-theme",
+    "dark",
+    "xcode",
+    "xcode-dark",
+    "jetbrains",
+    "webstorm",
+    "intellij"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marchenko-ia12/cursor-git-extensions",
+    "directory": "packages/xcode-dark-theme"
+  },
+  "bugs": {
+    "url": "https://github.com/marchenko-ia12/cursor-git-extensions/issues"
+  },
+  "homepage": "https://github.com/marchenko-ia12/cursor-git-extensions/tree/main/packages/xcode-dark-theme#readme",
+  "contributes": {
+    "themes": [
+      {
+        "label": "Xcode Dark (WebStorm)",
+        "uiTheme": "vs-dark",
+        "path": "./themes/xcode-dark-color-theme.json"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "vsce package --allow-missing-repository --skip-license --no-dependencies"
+  }
+}
