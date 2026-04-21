@@ -3,6 +3,7 @@ import { findAllConfigs, RunConfig } from "./scripts";
 import { Runner } from "./runner";
 import { StatusBar } from "./statusBar";
 import { parseEnvString } from "./vars";
+import { PackageJsonCodeLensProvider } from "./codeLens";
 
 const SELECTED_CONFIG_KEY = "jbRunner.selectedConfig";
 const MRU_KEY = "jbRunner.mru";
@@ -34,10 +35,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     statusBar.render(selected);
   }
 
+  const codeLens = new PackageJsonCodeLensProvider(runner);
+  context.subscriptions.push(
+    vscode.languages.registerCodeLensProvider(
+      [
+        { language: "json", pattern: "**/package.json" },
+        { language: "jsonc", pattern: "**/package.json" },
+      ],
+      codeLens
+    )
+  );
+
   context.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => refresh()),
     vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration("jbRunner.configurations")) refresh();
+      if (e.affectsConfiguration("jbRunner.packageJsonCodeLens")) codeLens.refresh();
     }),
     vscode.workspace.onDidSaveTextDocument(doc => {
       if (doc.fileName.endsWith("package.json")) refresh();
@@ -71,8 +84,40 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await runner.start(selected);
     }),
 
+    vscode.commands.registerCommand(
+      "jbRunner.runScript",
+      async (arg: { cwd: string; script: string } | undefined) => {
+        if (!arg || !arg.cwd || !arg.script) return;
+        const all = await findAllConfigs();
+        const config = all.find(
+          c => c.kind === "npm" && c.cwd === arg.cwd && c.label === arg.script
+        );
+        if (!config) {
+          vscode.window.showWarningMessage(
+            `JB Runner: script "${arg.script}" not found in ${arg.cwd}.`
+          );
+          return;
+        }
+        selected = config;
+        await context.workspaceState.update(SELECTED_CONFIG_KEY, config.id);
+        statusBar.render(selected);
+        await bumpMru(context, config.id);
+        await runner.start(config);
+      }
+    ),
+
     vscode.commands.registerCommand("jbRunner.stop", async () => {
       await runner.stop();
+    }),
+
+    vscode.commands.registerCommand("jbRunner.restart", async () => {
+      const target = runner.currentRunning ?? selected;
+      if (!target) {
+        await vscode.commands.executeCommand("jbRunner.pickConfig");
+        return;
+      }
+      await bumpMru(context, target.id);
+      await runner.start(target);
     }),
 
     vscode.commands.registerCommand("jbRunner.showOutput", () => {

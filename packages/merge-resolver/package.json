@@ -2,7 +2,7 @@
   "name": "ocelot-merge-resolver",
   "displayName": "Ocelot Merge Resolver",
   "description": "Six-shooter for your git conflicts. JetBrains-style 3-way merge resolver with mini-map, git history per side, and optional AI-assisted suggestions via the Anthropic API.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "marchenko-ia12",
   "license": "MIT",
   "icon": "icon.png",
@@ -54,11 +54,27 @@
         "command": "mergeResolver.setAiKey",
         "title": "Set Anthropic API key",
         "category": "Merge Resolver"
+      },
+      {
+        "command": "mergeResolver.changeOpenBehavior",
+        "title": "Change open behavior",
+        "category": "Merge Resolver"
       }
     ],
     "configuration": {
       "title": "Merge Resolver",
       "properties": {
+        "mergeResolver.openBehavior": {
+          "type": "string",
+          "enum": ["focusMode", "newWindow", "current"],
+          "enumDescriptions": [
+            "Stay in the main window, but close the bottom panel, the right auxiliary bar, and all other editor groups — leaving only the primary sidebar + the merge editor. (Claude-Code-style.)",
+            "Move the merge editor into a brand-new OS window.",
+            "Just open the editor — do not rearrange anything."
+          ],
+          "default": "focusMode",
+          "markdownDescription": "How Merge Resolver arranges the workbench when it auto-opens a conflict.\n\n- `focusMode` — close panel/aux bar/other groups, keep the primary sidebar.\n- `newWindow` — move the editor into a separate OS window.\n- `current` — leave everything as is."
+        },
         "mergeResolver.anthropicModel": {
           "type": "string",
           "default": "claude-sonnet-4-6",

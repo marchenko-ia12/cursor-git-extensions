@@ -6,6 +6,9 @@ hit `▶`, stop with `⏹` — right from the status bar.
 ## Features
 
 - **Status bar tri-state** — config picker → green `▶` run → red `⏹` stop.
+- **`package.json` CodeLens** — `▶ Run` above every entry in `scripts`;
+  turns into `⏹ Stop` while that script is running. Toggle via
+  `jbRunner.packageJsonCodeLens` (default `true`).
 - **Auto-discover** — scans every `package.json` in the workspace
   (node_modules excluded), exposes all `scripts` as run configurations.
 - **Custom configurations** — add your own shell commands (`make run`,
@@ -114,12 +117,14 @@ $(project) my-app: dev   ▶    $(terminal)   ⏹
 | --- | --- | --- |
 | Run current config | `Cmd+Alt+R` | `Ctrl+Alt+R` |
 | Stop | `Cmd+F2` | `Ctrl+F2` |
+| Restart | `Cmd+F5` | `Ctrl+F5` |
 | Pick config | `Cmd+Alt+Shift+R` | `Ctrl+Alt+Shift+R` |
 
 ## Commands
 
 - `JB Runner: Run current configuration`
 - `JB Runner: Stop running configuration`
+- `JB Runner: Restart running configuration`
 - `JB Runner: Pick run configuration`
 - `JB Runner: Show output of running configuration`
 - `JB Runner: Add custom configuration`

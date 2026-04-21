@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+
+- **`mergeResolver.openBehavior`** setting — controls how the editor
+  places the merge view when a conflict auto-opens:
+  - `focusMode` (new default, Claude-Code-style) — close the bottom
+    panel, the right auxiliary bar, and every other editor group.
+    Keep the primary sidebar intact. You end up with `sidebar |
+    merge editor` and nothing else.
+  - `newWindow` — previous default. Move the merge editor into its
+    own OS window.
+  - `current` — open and leave everything as it was.
+- Command `Merge Resolver: Change open behavior` jumps straight to
+  the setting in the Settings UI.
+
+### Changed
+
+- Default open behavior is now `focusMode`. Set
+  `mergeResolver.openBehavior` back to `newWindow` if you preferred
+  the old 0.2.0 behavior.
+
 ## 0.2.0
 
 ### Changed

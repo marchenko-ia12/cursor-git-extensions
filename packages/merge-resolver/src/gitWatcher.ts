@@ -59,11 +59,32 @@ async function check(repo: GitRepo) {
 
   for (let i = 0; i < conflicts.length; i++) {
     await vscode.commands.executeCommand("vscode.openWith", conflicts[i].uri, MergeEditorProvider.viewType);
-    if (i === 0) {
-      try {
-        await vscode.commands.executeCommand("workbench.action.moveEditorToNewWindow");
-      } catch { /* command unavailable — stay in main window */ }
+    if (i === 0) await applyOpenBehavior();
+  }
+}
+
+async function applyOpenBehavior(): Promise<void> {
+  const behavior = vscode.workspace
+    .getConfiguration("mergeResolver")
+    .get<"focusMode" | "newWindow" | "current">("openBehavior", "focusMode");
+
+  try {
+    if (behavior === "newWindow") {
+      await vscode.commands.executeCommand("workbench.action.moveEditorToNewWindow");
+      return;
     }
+    if (behavior === "focusMode") {
+      // close bottom panel (terminal / output / problems)
+      await vscode.commands.executeCommand("workbench.action.closePanel");
+      // close right auxiliary bar
+      await vscode.commands.executeCommand("workbench.action.closeAuxiliaryBar");
+      // collapse any extra editor groups into the active one
+      await vscode.commands.executeCommand("workbench.action.closeEditorsInOtherGroups");
+      // keep primary sidebar (Source Control / Claude chat / etc.) intact
+    }
+    // "current" — do nothing
+  } catch {
+    /* commands unavailable in some hosts — just stay put */
   }
 }
 

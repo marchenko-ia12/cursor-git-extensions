@@ -28,6 +28,15 @@ export function activate(context: vscode.ExtensionContext) {
       await vscode.commands.executeCommand("vscode.openWith", uri, MergeEditorProvider.viewType);
     }),
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("mergeResolver.changeOpenBehavior", async () => {
+      await vscode.commands.executeCommand(
+        "workbench.action.openSettings",
+        "mergeResolver.openBehavior",
+      );
+    }),
+  );
 }
 
 export function deactivate() {}

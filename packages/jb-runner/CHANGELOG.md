@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.5.0
+
+### Added
+
+- **Restart** — one-click stop-and-rerun for the currently running
+  configuration. Shows up while a script is running:
+  - Editor title bar: `↻` next to `⏹`.
+  - Status bar: yellow refresh icon.
+  - `package.json` CodeLens: `↻ Restart` next to `⏹ Stop`.
+  - Command palette: `JB Runner: Restart running configuration`.
+  - Keybinding: `Cmd+F5` / `Ctrl+F5` (matches IntelliJ's Rerun).
+
+## 0.4.1
+
+### Fixed
+
+- `▶` / `⏹` no longer leak into chat-panel / webview title bars in
+  Cursor. The buttons now only show on real file editors
+  (`resourceScheme == file`).
+
+## 0.4.0
+
+### Added
+
+- **`package.json` CodeLens** — a `▶ Run` line above every entry in
+  `scripts: { ... }`. Click to launch that script through the runner
+  (same terminal, MRU, status bar, all wired). While it runs the
+  same line shows `⏹ Stop`.
+- Setting `jbRunner.packageJsonCodeLens` (default `true`) to turn it
+  off.
+- Command `JB Runner: Run npm script (by cwd + name)` for scripted
+  invocation (hidden from the palette).
+
 ## 0.3.1
 
 ### Changed
