@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.5.0
+
+### Changed
+
+- **Inline per-side accept / reject buttons**, IntelliJ-style.
+  Every conflict slot in the Yours and Theirs panes now carries a
+  floating toolbar:
+  - `»` / `«` — accept this side.
+  - `×` — reject this side (pick the other one instead).
+
+  Always visible, no hover required.
+- **Red / green tint** for conflict lines, using the editor's native
+  diff vars (`--vscode-diffEditor-removedLineBackground` and
+  `...insertedLineBackground`). Yours lines read as "will be removed",
+  Theirs lines as "will be added" — same visual language as a plain
+  git diff.
+- Conflict-slot borders now use `gitDecoration-*` colors to match the
+  red/green scheme.
+
+## 0.4.0
+
+### Added
+
+- **`⊘ Discard` button** per conflict — drops **both** Yours and
+  Theirs and resolves the conflict to empty content. Use it when
+  neither side is what you want (e.g. the whole block was added by
+  mistake on both branches, or the code moved elsewhere). The
+  conflict immediately counts as resolved, so it stops blocking
+  **Save**.
+- New `{ kind: "none" }` resolution type backing it.
+
 ## 0.3.0
 
 ### Added

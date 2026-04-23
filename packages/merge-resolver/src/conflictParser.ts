@@ -94,6 +94,7 @@ export type Resolution =
   | { kind: "theirs" }
   | { kind: "both"; order: "yt" | "ty" }
   | { kind: "base" }
+  | { kind: "none" }
   | { kind: "custom"; text: string };
 
 export function render(chunks: Chunk[], resolutions: Map<number, Resolution>): string {
@@ -110,6 +111,7 @@ export function render(chunks: Chunk[], resolutions: Map<number, Resolution>): s
         case "theirs": return c.theirs;
         case "base": return c.base ?? "";
         case "both": return r.order === "yt" ? `${c.yours}\n${c.theirs}` : `${c.theirs}\n${c.yours}`;
+        case "none": return "";
         case "custom": return r.text;
       }
     })

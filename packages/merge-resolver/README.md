@@ -7,6 +7,9 @@ A JetBrains-style 3-way merge conflict resolver for VS Code and Cursor. Resolves
 ## Features
 
 - **3-pane layout** — Yours, Base (common ancestor), Theirs side-by-side with clear accept buttons at each conflict.
+- **Per-conflict actions** — `» Yours`, `Theirs «`, `Both Y→T`, `Both T→Y`, `Base`, and `⊘ Discard` (throw away both sides — useful when neither branch has the right code). Plus a sparkle `✨ AI` if a key is configured.
+- **Inline side buttons** on every conflict, IntelliJ-style: `»` / `«` to accept that side, `×` to reject it (i.e. use the opposite side). Always visible, no hover needed.
+- **Red / green line tint** — Yours reads as "will be removed" (red), Theirs as "will be added" (green), matching the convention of a plain `git diff`.
 - **Focus mode** — when a merge / rebase stops, the resolver closes the bottom panel, the right auxiliary bar, and other editor groups, leaving only your primary sidebar and a full-width merge editor (Claude-Code-style). Switch to a new OS window or do nothing via `mergeResolver.openBehavior`.
 - **Mini-map** — a proportional overview of all conflicts in the file with color-coded status (unresolved / accepted-yours / accepted-theirs / accepted-base / custom).
 - **Prev / Next navigation** — `F7` / `Shift+F7` or the toolbar buttons jump between conflicts.

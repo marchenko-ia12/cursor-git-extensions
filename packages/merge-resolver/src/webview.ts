@@ -73,7 +73,7 @@ export function webviewHtml(webview: vscode.Webview, _extUri: vscode.Uri): strin
   .line { padding: 0 10px 0 24px; position: relative; }
   .line.common { color: var(--vscode-editor-foreground); opacity: 0.58; }
   .line.yours {
-    background: var(--vscode-merge-currentContentBackground, rgba(64, 160, 255, 0.22));
+    background: var(--vscode-diffEditor-removedLineBackground, rgba(220, 80, 80, 0.22));
     opacity: 1;
   }
   .line.yours::before {
@@ -82,7 +82,7 @@ export function webviewHtml(webview: vscode.Webview, _extUri: vscode.Uri): strin
     font-weight: 700; opacity: 0.9;
   }
   .line.theirs {
-    background: var(--vscode-merge-incomingContentBackground, rgba(120, 200, 120, 0.22));
+    background: var(--vscode-diffEditor-insertedLineBackground, rgba(80, 190, 100, 0.22));
     opacity: 1;
   }
   .line.theirs::before {
@@ -108,27 +108,42 @@ export function webviewHtml(webview: vscode.Webview, _extUri: vscode.Uri): strin
   .conflict-sep .arrow { font-size: 13px; opacity: 0.8; }
   .conflict-slot { scroll-margin: 40px; position: relative; margin: 2px 0; }
   #yours .conflict-slot {
-    border-left: 3px solid var(--vscode-merge-currentHeaderBackground, rgba(64, 160, 255, 0.75));
-    background: rgba(64, 160, 255, 0.04);
+    border-left: 3px solid var(--vscode-gitDecoration-deletedResourceForeground, #f97583);
+    background: rgba(220, 80, 80, 0.04);
   }
   #theirs .conflict-slot {
-    border-right: 3px solid var(--vscode-merge-incomingHeaderBackground, rgba(120, 200, 120, 0.75));
-    background: rgba(120, 200, 120, 0.04);
+    border-right: 3px solid var(--vscode-gitDecoration-untrackedResourceForeground, #85e89d);
+    background: rgba(80, 190, 100, 0.04);
   }
-  .slot-accept { position: absolute; top: 4px; z-index: 3;
-                 width: 28px; height: 22px;
-                 background: var(--vscode-button-background);
-                 color: var(--vscode-button-foreground);
-                 border: 1px solid rgba(0,0,0,0.25);
-                 border-radius: 4px; cursor: pointer;
-                 font-size: 14px; font-weight: 700; line-height: 1;
-                 display: flex; align-items: center; justify-content: center;
-                 box-shadow: 0 2px 5px rgba(0,0,0,0.35);
-                 opacity: 0.65; transition: opacity 0.15s, transform 0.15s, background 0.15s; }
-  .conflict-slot:hover .slot-accept { opacity: 1; }
-  .slot-accept:hover { background: var(--vscode-button-hoverBackground); transform: scale(1.1); }
-  .slot-accept.yours { right: 6px; }
-  .slot-accept.theirs { left: 6px; }
+  .slot-actions {
+    position: absolute; top: 4px; z-index: 3;
+    display: flex; gap: 3px;
+  }
+  .slot-actions.yours { right: 6px; }
+  .slot-actions.theirs { left: 6px; flex-direction: row-reverse; }
+  .slot-btn {
+    width: 26px; height: 22px;
+    border: 1px solid rgba(0,0,0,0.25);
+    border-radius: 4px; cursor: pointer;
+    font-size: 14px; font-weight: 700; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.35);
+    opacity: 0.9; transition: opacity 0.15s, transform 0.15s, background 0.15s;
+  }
+  .slot-btn:hover { opacity: 1; transform: scale(1.1); }
+  .slot-btn.accept {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+  }
+  .slot-btn.accept:hover { background: var(--vscode-button-hoverBackground); }
+  .slot-btn.reject {
+    background: var(--vscode-button-secondaryBackground, rgba(80, 80, 80, 0.65));
+    color: var(--vscode-button-secondaryForeground, #fff);
+  }
+  .slot-btn.reject:hover {
+    background: var(--vscode-errorForeground, #c74e39);
+    color: #fff;
+  }
   .btn-accept-yours { background: #2d7fd1 !important; color: #fff !important; font-weight: 600 !important; }
   .btn-accept-yours:hover:not(:disabled) { background: #3a8cde !important; }
   .btn-accept-theirs { background: #3f9a4f !important; color: #fff !important; font-weight: 600 !important; }
@@ -206,9 +221,15 @@ export function webviewHtml(webview: vscode.Webview, _extUri: vscode.Uri): strin
 
   function wrapSlot(id, side, inner) {
     const arrow = side === 'yours' ? '»' : '«';
-    const title = side === 'yours' ? 'Accept Yours' : 'Accept Theirs';
-    const btn = '<button class="slot-accept '+side+'" data-action="'+side+'" data-id="'+id+'" title="'+title+'">'+arrow+'</button>';
-    return '<div class="conflict-slot" data-conflict-id="'+id+'">'+btn+inner+'</div>';
+    const acceptTitle = side === 'yours' ? 'Accept Yours (use this side)' : 'Accept Theirs (use this side)';
+    const rejectTitle = side === 'yours'
+      ? 'Reject Yours (use the other side instead)'
+      : 'Reject Theirs (use the other side instead)';
+    const rejectAction = side === 'yours' ? 'reject-yours' : 'reject-theirs';
+    const accept = '<button class="slot-btn accept" data-action="'+side+'" data-id="'+id+'" title="'+acceptTitle+'">'+arrow+'</button>';
+    const reject = '<button class="slot-btn reject" data-action="'+rejectAction+'" data-id="'+id+'" title="'+rejectTitle+'">×</button>';
+    const actions = '<div class="slot-actions '+side+'">'+accept+reject+'</div>';
+    return '<div class="conflict-slot" data-conflict-id="'+id+'">'+actions+inner+'</div>';
   }
 
   function render() {
@@ -324,6 +345,7 @@ export function webviewHtml(webview: vscode.Webview, _extUri: vscode.Uri): strin
     } else if (res.kind === 'yours') body = renderLines(c.yours, 'yours');
     else if (res.kind === 'theirs') body = renderLines(c.theirs, 'theirs');
     else if (res.kind === 'base') body = renderLines(c.base || '', 'base');
+    else if (res.kind === 'none') body = '<div class="line common" style="font-style:italic;opacity:0.55">(discarded — both sides dropped)</div>';
     else if (res.kind === 'both') {
       body = res.order === 'yt'
         ? renderLines(c.yours, 'yours') + SEP + renderLines(c.theirs, 'theirs')
@@ -345,6 +367,7 @@ export function webviewHtml(webview: vscode.Webview, _extUri: vscode.Uri): strin
         '<button class="mini btn-ai" data-action="ai" data-id="'+c.id+'" title="AI Suggest" '+aiBtnDisabled+'>✨ AI</button>' +
         '<button class="mini secondary" data-action="both-yt" data-id="'+c.id+'" title="Both, Yours first">Both Y→T</button>' +
         '<button class="mini secondary" data-action="both-ty" data-id="'+c.id+'" title="Both, Theirs first">Both T→Y</button>' +
+        '<button class="mini secondary" data-action="none" data-id="'+c.id+'" title="Discard both sides — conflict resolves to nothing">⊘ Discard</button>' +
         baseBtn + resetBtn +
       '</div></div>' +
       '<div>'+body+'</div>' +
@@ -411,6 +434,9 @@ export function webviewHtml(webview: vscode.Webview, _extUri: vscode.Uri): strin
       else if (action === 'base') resolution = { kind:'base' };
       else if (action === 'both-yt') resolution = { kind:'both', order:'yt' };
       else if (action === 'both-ty') resolution = { kind:'both', order:'ty' };
+      else if (action === 'none') resolution = { kind:'none' };
+      else if (action === 'reject-yours') resolution = { kind:'theirs' };
+      else if (action === 'reject-theirs') resolution = { kind:'yours' };
       vscode.postMessage({ type:'resolve', id, resolution });
     }
   });
