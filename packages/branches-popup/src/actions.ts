@@ -49,8 +49,7 @@ async function checkout({ repo, branch }: ActionContext): Promise<void> {
 async function update({ repo, branch, currentBranch }: ActionContext): Promise<void> {
   if (branch.name === currentBranch) {
     await repo.fetch();
-    await repo.pull();
-    vscode.window.showInformationMessage(`Updated ${branch.name}`);
+    await smartPull(repo);
     return;
   }
   if (!branch.upstream) {
@@ -82,7 +81,7 @@ async function tryWithAutoStash(repo: Repo, opLabel: string, op: () => Promise<v
   } catch (e) {
     const err = e as { stderr?: string };
     const msg = err.stderr ?? "";
-    const isDirtyErr = /would be overwritten|local changes|uncommitted/i.test(msg);
+    const isDirtyErr = /would be overwritten|local changes|uncommitted|unstaged changes|cannot pull with rebase/i.test(msg);
     if (!isDirtyErr) throw e;
 
     const choice = await vscode.window.showErrorMessage(
@@ -103,6 +102,85 @@ async function tryWithAutoStash(repo: Repo, opLabel: string, op: () => Promise<v
       vscode.window.showWarningMessage("Stashed changes restored with conflicts — resolve them with Merge Resolver.");
     }
   }
+}
+
+type PullStrategy = "ask" | "merge" | "rebase" | "ffOnly";
+
+export async function smartPull(repo: Repo): Promise<void> {
+  const strategy = vscode.workspace
+    .getConfiguration("branchesPopup")
+    .get<PullStrategy>("pullStrategy", "ask");
+  await tryWithAutoStash(repo, "pull", () => runSmartPull(repo, strategy));
+}
+
+async function runSmartPull(repo: Repo, strategy: PullStrategy): Promise<void> {
+  if (strategy === "ffOnly") {
+    const res = await runGit(repo, ["pull", "--ff-only"]);
+    reportPullOutcome(res, "pull (fast-forward only)");
+    return;
+  }
+  if (strategy === "merge") {
+    const res = await runGit(repo, ["pull", "--no-rebase", "--no-edit"]);
+    reportPullOutcome(res, "pull (merge)");
+    return;
+  }
+  if (strategy === "rebase") {
+    const res = await runGit(repo, ["pull", "--rebase"]);
+    reportPullOutcome(res, "pull (rebase)");
+    return;
+  }
+
+  // strategy === "ask": fast-path ff-only first — no prompt needed when branches can just fast-forward.
+  try {
+    const res = await runGit(repo, ["pull", "--ff-only"]);
+    reportPullOutcome(res, "pull (fast-forward)");
+    return;
+  } catch (e) {
+    const msg = ((e as { stderr?: string })?.stderr ?? "").toString();
+    const diverged = /divergent|non-fast-forward|not possible to fast-forward/i.test(msg);
+    if (!diverged) throw e;
+  }
+
+  const pick = await vscode.window.showQuickPick(
+    [
+      {
+        label: "$(git-merge) Merge",
+        description: "Create a merge commit joining both histories",
+        detail: "Equivalent to `git pull --no-rebase`",
+        value: "merge" as const,
+      },
+      {
+        label: "$(git-branch) Rebase",
+        description: "Replay your local commits on top of remote (linear history)",
+        detail: "Equivalent to `git pull --rebase`",
+        value: "rebase" as const,
+      },
+    ],
+    {
+      title: "Divergent branches — how to reconcile?",
+      placeHolder: "You and the remote both have new commits. Fast-forward is not possible.",
+    },
+  );
+  if (!pick) return;
+
+  const args = pick.value === "merge"
+    ? ["pull", "--no-rebase", "--no-edit"]
+    : ["pull", "--rebase"];
+  const res = await runGit(repo, args);
+  reportPullOutcome(res, `pull (${pick.value})`);
+}
+
+function reportPullOutcome(res: { stdout: string; stderr: string }, label: string): void {
+  const out = (res.stdout + res.stderr).trim();
+  if (/conflict/i.test(out)) {
+    vscode.window.showWarningMessage(`${label} stopped on conflict — resolve with Merge Resolver.`);
+    return;
+  }
+  if (/already up to date/i.test(out)) {
+    vscode.window.showInformationMessage("Already up to date.");
+    return;
+  }
+  vscode.window.showInformationMessage(`Completed ${label}.`);
 }
 
 function reportOutcome(res: { stdout: string; stderr: string }, successMsg: string): void {
@@ -206,8 +284,7 @@ async function push({ repo, branch }: ActionContext): Promise<void> {
 
 async function pull({ repo, branch, currentBranch }: ActionContext): Promise<void> {
   if (branch.name === currentBranch) {
-    await repo.pull();
-    vscode.window.showInformationMessage(`Pulled ${branch.name}`);
+    await smartPull(repo);
     return;
   }
   if (!branch.upstream) {

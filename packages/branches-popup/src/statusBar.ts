@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { getGitApi, Repo, GitAPI } from "./gitApi";
+import { smartPull } from "./actions";
 
 export async function initStatusBar(context: vscode.ExtensionContext): Promise<void> {
   const branchItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
@@ -80,12 +81,12 @@ async function updateCurrent(api: GitAPI): Promise<void> {
   try {
     await repo.fetch();
     const behind = repo.state.HEAD?.behind ?? 0;
-    if (behind > 0) {
-      await repo.pull();
-      vscode.window.showInformationMessage(`Pulled ${behind} commit${behind === 1 ? "" : "s"}.`);
-    } else {
+    const ahead = repo.state.HEAD?.ahead ?? 0;
+    if (behind === 0 && ahead === 0) {
       vscode.window.showInformationMessage("Already up to date.");
+      return;
     }
+    await smartPull(repo);
   } catch (e) {
     const err = e as { stderr?: string; message?: string };
     vscode.window.showErrorMessage(`Update failed: ${err.stderr?.trim() ?? err.message ?? String(e)}`);

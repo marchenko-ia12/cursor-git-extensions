@@ -2,7 +2,7 @@
   "name": "git-branch-switcher",
   "displayName": "Git Branch Switcher",
   "description": "JetBrains-style branches popup with multi-repo support, drill-down actions, push/pull, log, compare, rename — for VS Code and Cursor.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "marchenko-ia12",
   "license": "MIT",
   "icon": "icon.png",
@@ -48,7 +48,24 @@
         "key": "ctrl+shift+`",
         "mac": "cmd+shift+`"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Git Branch Switcher",
+      "properties": {
+        "branchesPopup.pullStrategy": {
+          "type": "string",
+          "enum": ["ask", "merge", "rebase", "ffOnly"],
+          "enumDescriptions": [
+            "If fast-forward is not possible, pop up a Merge / Rebase picker (IntelliJ Smart Update behaviour).",
+            "Always merge: git pull --no-rebase.",
+            "Always rebase: git pull --rebase (linear history).",
+            "Fast-forward only: fail if histories have diverged."
+          ],
+          "default": "ask",
+          "markdownDescription": "How **Pull** and **Update** reconcile divergent branches.\n\n- `ask` *(default)* — try fast-forward, prompt Merge / Rebase if it diverged.\n- `merge` — always `git pull --no-rebase`.\n- `rebase` — always `git pull --rebase`.\n- `ffOnly` — fail loud if fast-forward is not possible."
+        }
+      }
+    }
   },
   "scripts": {
     "build": "node esbuild.js",

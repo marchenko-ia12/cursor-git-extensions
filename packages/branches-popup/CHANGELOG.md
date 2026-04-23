@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.0
+
+### Added
+
+- **Smart Pull** — Pull and Update now handle divergent branches
+  gracefully. When `git pull --ff-only` fails because both you and
+  the remote have new commits, a Merge / Rebase picker appears (same
+  idea as IntelliJ Smart Update). If the chosen strategy stops on a
+  conflict, Ocelot Merge Resolver picks it up automatically.
+- **Setting `branchesPopup.pullStrategy`** — pin a preference:
+  `ask` *(default)*, `merge`, `rebase`, or `ffOnly`.
+
+### Changed
+
+- Pull operations auto-stash a wider set of dirty-tree errors
+  (`unstaged changes`, `cannot pull with rebase`, …) before retrying.
+
 ## 0.1.0
 
 Initial release.
