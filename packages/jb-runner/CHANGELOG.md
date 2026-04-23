@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.0
+
+### Fixed
+
+- **Detect actual process exit.** Short-lived scripts (`npm run build`,
+  `make test`, linters) used to stay stuck in "running" state after
+  they'd already finished — the only way out was **Stop**. The runner
+  now uses VS Code's Shell Integration API
+  (`onDidEndTerminalShellExecution`) and flips back to idle as soon as
+  the command exits, so `▶` reappears automatically. Terminal stays
+  open so you can still read its output.
+- On hosts / shells where Shell Integration is disabled, behaviour
+  falls back to the previous mode (active until terminal closes).
+
 ## 0.5.0
 
 ### Added
