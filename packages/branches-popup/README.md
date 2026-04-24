@@ -6,7 +6,8 @@ A JetBrains-style branches popup for VS Code and Cursor. Pick a branch, drill do
 
 - **Keyboard-first popup** — `Cmd+Shift+\`` (macOS) / `Ctrl+Shift+\`` opens a QuickPick listing all branches.
 - **Multi-repo support** — in a workspace with several repositories the popup shows them all, each with a colored dot and its current branch. Switch repositories inline without closing the popup.
-- **Drill-down actions** — pressing Enter on a branch opens a nested action menu (Checkout, Merge, Rebase, Push, Pull, Compare, Show log, Rename, Delete, New branch from here). A "Back to branches" item returns you to the branch list.
+- **Drill-down actions** — pressing Enter on a branch opens a nested action menu (Checkout, **Update**, Merge, Rebase, Push, Pull, Compare, Show log, Rename, Delete, New branch from here). A "Back to branches" item returns you to the branch list.
+- **Update without checkout** — every branch in the popup has an Update action that fast-forwards it to the latest remote *without* checking it out. For local branches with no upstream, the extension auto-detects `<remote>/<branchName>` via `git ls-remote`. For remote-tracking branches it just refetches.
 - **Push / Pull with remote selection** — if there is no upstream, the extension prompts for a remote and sets it up with `push -u`.
 - **Smart Pull** — when branches have diverged (both you and the remote have new commits, so fast-forward is impossible), the extension asks how to reconcile: **Merge** (classic merge commit) or **Rebase** (linear history). No more cryptic `hint: You have divergent branches` stops. Dirty working tree is auto-stashed and popped back after the operation. If the strategy stops on a conflict, Ocelot Merge Resolver kicks in automatically.
 - **Compare branches** — opens a markdown document showing commits that are ahead and behind relative to the current branch.

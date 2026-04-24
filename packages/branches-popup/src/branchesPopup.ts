@@ -225,8 +225,22 @@ function buildActions(branch: Branch, currentBranch: string | undefined): (Actio
   }
   if (isCurrent) {
     items.push({ label: "$(cloud-download) Update (fetch + pull)", actionKind: "update" });
-  } else if (!isRemote && branch.upstream) {
-    items.push({ label: "$(cloud-download) Update (fast-forward from upstream)", actionKind: "update" });
+  } else if (isRemote) {
+    const slash = branch.name.indexOf("/");
+    const remoteName = slash > 0 ? branch.name.slice(0, slash) : "remote";
+    items.push({
+      label: `$(cloud-download) Fetch from ${remoteName}`,
+      actionKind: "update",
+    });
+  } else {
+    const detail = branch.upstream
+      ? `Fast-forward from ${branch.upstream.remote}/${branch.upstream.name}`
+      : "Pull latest from remote (no upstream — will look up by name)";
+    items.push({
+      label: "$(cloud-download) Update — pull latest, no checkout",
+      detail,
+      actionKind: "update",
+    });
   }
 
   if (!isRemote) {

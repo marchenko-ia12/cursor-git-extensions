@@ -52,12 +52,66 @@ async function update({ repo, branch, currentBranch }: ActionContext): Promise<v
     await smartPull(repo);
     return;
   }
-  if (!branch.upstream) {
-    vscode.window.showWarningMessage(`${branch.name} has no upstream.`);
+
+  // Remote-tracking branch: just fetch its remote so the ref is up to date.
+  if (branch.type === "remote") {
+    const slash = branch.name.indexOf("/");
+    if (slash <= 0) {
+      vscode.window.showWarningMessage(`Cannot parse remote from ${branch.name}.`);
+      return;
+    }
+    const remote = branch.name.slice(0, slash);
+    const remoteRef = branch.name.slice(slash + 1);
+    await runGit(repo, ["fetch", remote, remoteRef]);
+    vscode.window.showInformationMessage(`Fetched ${branch.name}`);
     return;
   }
-  await runGit(repo, ["fetch", branch.upstream.remote, `${branch.upstream.name}:${branch.name}`]);
-  vscode.window.showInformationMessage(`Fast-forwarded ${branch.name}`);
+
+  // Local branch with upstream — fast-forward in place.
+  if (branch.upstream) {
+    await runGit(repo, ["fetch", branch.upstream.remote, `${branch.upstream.name}:${branch.name}`]);
+    vscode.window.showInformationMessage(`Updated ${branch.name} from ${branch.upstream.remote}/${branch.upstream.name}`);
+    return;
+  }
+
+  // Local branch without upstream — guess one by name across configured remotes.
+  const remotes = await listRemotes(repo);
+  const guess = await firstExistingRemoteRef(repo, remotes, branch.name);
+  if (!guess) {
+    vscode.window.showWarningMessage(
+      `${branch.name} has no upstream and no matching ${remotes[0] ?? "remote"}/${branch.name} ref. ` +
+        `Push it once with an upstream first.`,
+    );
+    return;
+  }
+
+  // Fast-forward and offer to set the upstream while we're at it.
+  await runGit(repo, ["fetch", guess.remote, `${guess.ref}:${branch.name}`]);
+  vscode.window.showInformationMessage(
+    `Updated ${branch.name} from ${guess.remote}/${guess.ref} (no upstream tracked).`,
+  );
+}
+
+async function firstExistingRemoteRef(
+  repo: Repo,
+  remotes: string[],
+  branchName: string,
+): Promise<{ remote: string; ref: string } | undefined> {
+  for (const remote of remotes) {
+    try {
+      // Faster than fetching: ask the remote what refs it advertises.
+      const res = await runGit(repo, [
+        "ls-remote",
+        "--heads",
+        remote,
+        branchName,
+      ]);
+      if (res.stdout.trim()) return { remote, ref: branchName };
+    } catch {
+      // remote unreachable or not configured — skip
+    }
+  }
+  return undefined;
 }
 
 async function merge({ repo, branch, currentBranch }: ActionContext): Promise<void> {

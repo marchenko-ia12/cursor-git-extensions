@@ -2,7 +2,7 @@
   "name": "git-branch-switcher",
   "displayName": "Git Branch Switcher",
   "description": "JetBrains-style branches popup with multi-repo support, drill-down actions, push/pull, log, compare, rename — for VS Code and Cursor.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "marchenko-ia12",
   "license": "MIT",
   "icon": "icon.png",

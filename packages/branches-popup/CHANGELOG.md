@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+
+- **Update is now always available in the branch action menu**, no
+  matter the branch type. Pulls the latest **without checking the
+  branch out**:
+  - Current branch → `fetch` + smart pull (existing behaviour).
+  - Local branch with upstream → fast-forward via
+    `git fetch <remote> <upstream>:<branch>`.
+  - Local branch **without** upstream → automatically looks up
+    `<remote>/<branchName>` via `git ls-remote` across configured
+    remotes; fast-forwards from the first match.
+  - Remote-tracking branch → labelled "Fetch from `<remote>`",
+    refreshes the remote-tracking ref.
+
 ## 0.2.1
 
 ### Changed
