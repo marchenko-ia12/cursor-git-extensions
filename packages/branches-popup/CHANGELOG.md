@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1
+
+### Changed
+
+- The status-bar sync icon now **spins** (`$(sync~spin)`) while a
+  fetch / pull is in progress — you can tell at a glance that the
+  update actually started. The warning background is suppressed
+  during the operation, then restored to its `behind > 0` state.
+
 ## 0.2.0
 
 ### Added

@@ -13,6 +13,8 @@ export async function initStatusBar(context: vscode.ExtensionContext): Promise<v
   updateItem.name = "Update Current Branch";
   context.subscriptions.push(updateItem);
 
+  let syncing = false;
+
   const api = await getGitApi();
   if (!api) {
     branchItem.text = "$(git-branch) no git";
@@ -39,9 +41,12 @@ export async function initStatusBar(context: vscode.ExtensionContext): Promise<v
     const counts: string[] = [];
     if (behind > 0) counts.push(`↓${behind}`);
     if (ahead > 0) counts.push(`↑${ahead}`);
-    updateItem.text = counts.length ? `$(sync) ${counts.join(" ")}` : "$(sync)";
+    const icon = syncing ? "$(sync~spin)" : "$(sync)";
+    updateItem.text = counts.length ? `${icon} ${counts.join(" ")}` : icon;
     const upstream = head?.upstream ? `${head.upstream.remote}/${head.upstream.name}` : "upstream";
-    if (behind > 0 && ahead > 0) {
+    if (syncing) {
+      updateItem.tooltip = `Syncing with ${upstream}…`;
+    } else if (behind > 0 && ahead > 0) {
       updateItem.tooltip = `${behind} behind, ${ahead} ahead of ${upstream}. Click to fetch & pull.`;
     } else if (behind > 0) {
       updateItem.tooltip = `${behind} behind ${upstream}. Click to pull.`;
@@ -50,7 +55,7 @@ export async function initStatusBar(context: vscode.ExtensionContext): Promise<v
     } else {
       updateItem.tooltip = `In sync with ${upstream}. Click to fetch & check for updates.`;
     }
-    updateItem.backgroundColor = behind > 0
+    updateItem.backgroundColor = !syncing && behind > 0
       ? new vscode.ThemeColor("statusBarItem.warningBackground")
       : undefined;
     updateItem.show();
@@ -64,7 +69,17 @@ export async function initStatusBar(context: vscode.ExtensionContext): Promise<v
   context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(update));
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("gitBranchSwitcher.updateCurrent", () => updateCurrent(api)),
+    vscode.commands.registerCommand("gitBranchSwitcher.updateCurrent", async () => {
+      if (syncing) return;
+      syncing = true;
+      update();
+      try {
+        await updateCurrent(api);
+      } finally {
+        syncing = false;
+        update();
+      }
+    }),
   );
 
   silentFetchAll(api);
