@@ -32,18 +32,94 @@ export async function runAction(kind: ActionKind, ctx: ActionContext): Promise<v
 }
 
 async function checkout({ repo, branch }: ActionContext): Promise<void> {
+  // Remote branches that don't have a local copy yet → create from remote.
   if (branch.type === "remote") {
     const short = branch.name.replace(/^[^/]+\//, "");
     const existing = (await repo.getBranches({ remote: false })).find((b) => b.name === short);
-    if (existing) {
-      await repo.checkout(short);
-    } else {
-      await repo.createBranch(short, true, branch.name);
+    if (!existing) {
+      try {
+        await repo.createBranch(short, true, branch.name);
+        vscode.window.showInformationMessage(`Checked out ${short} (created from ${branch.name})`);
+      } catch (e) {
+        await maybeSmartCheckout(repo, short, e, () => repo.createBranch(short, true, branch.name));
+      }
+      return;
     }
-  } else {
-    await repo.checkout(branch.name);
+    await checkoutSafely(repo, short);
+    return;
   }
-  vscode.window.showInformationMessage(`Checked out ${branch.name}`);
+  await checkoutSafely(repo, branch.name);
+}
+
+async function checkoutSafely(repo: Repo, targetName: string): Promise<void> {
+  try {
+    await repo.checkout(targetName);
+    vscode.window.showInformationMessage(`Checked out ${targetName}`);
+  } catch (e) {
+    await maybeSmartCheckout(repo, targetName, e, () => repo.checkout(targetName));
+  }
+}
+
+async function maybeSmartCheckout(
+  repo: Repo,
+  targetName: string,
+  originalError: unknown,
+  doCheckout: () => Promise<void>,
+): Promise<void> {
+  const msg = (originalError as { stderr?: string; message?: string }).stderr
+    ?? (originalError as { message?: string }).message
+    ?? "";
+  const isDirty = /would be overwritten by checkout|would be overwritten by merge|local changes/i.test(msg);
+  if (!isDirty) throw originalError;
+
+  const choice = await vscode.window.showWarningMessage(
+    `Cannot check out ${targetName}: local changes would be overwritten.`,
+    {
+      modal: true,
+      detail:
+        "Smart Checkout — stash changes, switch branches, then pop the stash back (unsaved changes follow you to the new branch).\n\n" +
+        "Force Checkout — discard your uncommitted changes and switch (cannot be undone).",
+    },
+    "Smart Checkout",
+    "Force Checkout",
+  );
+
+  if (choice === "Smart Checkout") {
+    await smartCheckout(repo, targetName, doCheckout);
+    return;
+  }
+  if (choice === "Force Checkout") {
+    await runGit(repo, ["checkout", "-f", targetName]);
+    vscode.window.showInformationMessage(`Force-checked out ${targetName} — local changes discarded.`);
+    return;
+  }
+  // Dismissed → "Don't Checkout" — nothing to do.
+}
+
+async function smartCheckout(
+  repo: Repo,
+  targetName: string,
+  doCheckout: () => Promise<void>,
+): Promise<void> {
+  await runGit(repo, ["stash", "push", "-u", "-m", `smart-checkout to ${targetName}`]);
+  let checkedOut = false;
+  try {
+    await doCheckout();
+    checkedOut = true;
+  } catch (e) {
+    // Checkout still failed for some other reason — restore the stash and rethrow.
+    await runGit(repo, ["stash", "pop"]).catch(() => undefined);
+    throw e;
+  }
+  const pop = await runGit(repo, ["stash", "pop"]);
+  const out = (pop.stdout + pop.stderr).trim();
+  if (/conflict/i.test(out)) {
+    vscode.window.showWarningMessage(
+      `Checked out ${targetName}, but stashed changes restored with conflicts — resolve them with Merge Resolver.`,
+    );
+  } else if (checkedOut) {
+    vscode.window.showInformationMessage(`Smart-checked out ${targetName} — stashed changes restored.`);
+  }
 }
 
 async function update({ repo, branch, currentBranch }: ActionContext): Promise<void> {

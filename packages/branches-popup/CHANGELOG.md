@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.0
+
+### Added
+
+- **Smart Checkout** (IntelliJ-style). When `git checkout` would
+  overwrite your local changes, instead of failing the extension now
+  shows a dialog with three options:
+  - **Smart Checkout** — stash uncommitted changes, switch branches,
+    pop the stash back so your work follows you to the new branch.
+    Conflicts on restore are picked up by Ocelot Merge Resolver.
+  - **Force Checkout** — discard your local changes and switch
+    (irreversible).
+  - **Don't Checkout** — cancel.
+
+  Works equally for local branches and for new local branches created
+  from remote ones.
+
 ## 0.3.0
 
 ### Added
